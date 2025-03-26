@@ -1,0 +1,33 @@
+.slick-prev,
+.slick-next {
+  width: 40px !important; /* Increased width */
+  height: 40px !important; /* Increased height */
+  background-color: red !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  z-index: 10 !important;
+  justify-content: center !important;
+  transition: background-color 0.3s ease-in-out !important;
+  padding: 4px 0 !important;
+}
+
+.slick-prev::before,
+.slick-next::before {
+  font-size: 20px !important;
+  color: white !important;
+  opacity: 1 !important;
+}
+
+.slick-prev:hover,
+.slick-next:hover {
+  background-color: red !important;
+}
+
+.slick-prev {
+  left: -30px !important;
+}
+
+.slick-next {
+  right: -30px !important;
+}
