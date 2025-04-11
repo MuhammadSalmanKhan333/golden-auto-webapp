@@ -1,56 +1,65 @@
-import MainImage from "../../assets/images/main-img.png";
-import React from "react";
+import React, { useState } from "react";
+import { FiSearch } from "react-icons/fi";
+import { Link, useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && searchTerm.trim()) {
+      navigate(`/listing?query=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
+
   return (
-    <section className="w-full bg-[#151F28] lg:my-10 relative overflow-hidden">
-      <div className="mx-8 md:mx-14 xl:mx-auto max-w-[1200px] flex flex-col lg:flex-row items-center">
-        {/* LEFT CONTENT */}
-        <div className="w-full lg:w-1/2 py-10 md:py-16 z-10">
-          <h1 className="text-5xl lg:text-6xl font-bold leading-tight text-[#FED700] mb-4 sm:mb-6 md:mb-10">
-            Buy, sell & rent{" "}
-            <span className="text-red-500 block">reputable cars</span>
-          </h1>
-          <p className="text-gray-100 text-base sm:text-lg mt-2 font-light max-w-[450px]">
-            Buy and sell reputable cars. Renting a car is easy and fast with
-            Topcar.
-          </p>
-          <div className="flex gap-6 md:gap-10 mt-6 md:mt-10">
-            <p className="font-bold text-xl sm:text-2xl md:text-3xl text-[#FED700] flex flex-col gap-1">
-              50+{" "}
-              <span className="text-gray-100 font-normal text-sm sm:text-base">
-                Car brands
-              </span>
-            </p>
-            <div className="border-[0.5px] border-[#d2cdcd] h-8 md:h-12"></div>
-            <p className="font-bold text-xl sm:text-2xl md:text-3xl text-[#FED700] flex flex-col gap-1">
-              10k+{" "}
-              <span className="text-gray-100 font-normal text-sm sm:text-base">
-                Clients
-              </span>
-            </p>
+    <div className="relative">
+      {/* Hero section with clip-path */}
+      <section className="relative w-full h-[180px] bg-gray-700 flex flex-col justify-center items-center text-center text-white px-5 clip-path-rounded-bottom">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold px-4 mb-5 md:mb-12">
+          Let's find your perfect car
+        </h1>
+      </section>
+
+      {/* Search field positioned absolutely below the clip-path */}
+      <div className="absolute -bottom-16 md:-bottom-19 left-0 right-0 flex justify-center">
+        <div className="flex flex-col w-full max-w-2xl px-5">
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              placeholder="Describe what you're looking for"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-white pl-12 pr-6 shadow-gray-900 py-3 md:py-4 rounded-full border-2 border-gray-700 focus:outline-none text-gray-900 shadow text-sm md:text-base"
+            />
+            <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          </div>
+
+          {/* Button group */}
+          <div className="flex justify-center gap-4 mt-3">
+            <Link to="/listing" className="px-6 py-1.5 cursor-pointer rounded-md border-1 border-white text-gray-400">
+              Shop New
+            </Link>
+            <Link to='/listing' className="px-6 py-1.5 cursor-pointer rounded-md border-1 border-white text-gray-400">
+              Shop Used
+            </Link>
           </div>
         </div>
-
-        {/* RIGHT IMAGE - Desktop */}
-        <div className="hidden lg:block absolute -right-8 top-0 h-full w-1/2">
-          <img
-            src={MainImage}
-            className="h-full max-w-[1200px] w-full object-contain"
-            alt="Luxury sports car"
-          />
-        </div>
-
-        {/* RIGHT IMAGE - Mobile and Tablet */}
-        <div className="w-full px-4 py-3 lg:hidden">
-          <img
-            src={MainImage}
-            className="w-full h-auto max-h-[400px] object-contain mx-auto"
-            alt="Luxury sports car"
-          />
-        </div>
       </div>
-    </section>
+
+      {/* Custom clip-path for rounded bottom effect */}
+      <style jsx global>{`
+        .clip-path-rounded-bottom {
+          clip-path: ellipse(150% 100% at 50% 0%);
+        }
+        @media (min-width: 768px) {
+          .clip-path-rounded-bottom {
+            clip-path: ellipse(120% 100% at 50% 0%);
+          }
+        }
+      `}</style>
+    </div>
   );
 };
 

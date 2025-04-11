@@ -31,7 +31,7 @@ const CarCard = ({ car }) => {
         <div className="border-b border-gray-600 my-3"></div>
 
         {/* Features Section */}
-        <div className="flex flex-wrap max-[500px]:gap-6 min-[500px]:gap-5 min-[500px]:justify-between text-gray-300 text-sm w-full">
+        <div className="flex flex-wrap max-[500px]:gap-6 min-[500px]:gap-5 justify-between text-gray-300 text-sm w-full">
           <div className="flex items-center gap-1">
             <FaGasPump className="text-yellow-400" />
             <span>Petrol</span>

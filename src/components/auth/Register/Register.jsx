@@ -12,6 +12,13 @@ import {
   FaHashtag,
 } from "react-icons/fa";
 import logo from "../../../assets/images/logo.svg";
+import person from "../../../assets/icons/person.svg";
+import passwordIcon from "../../../assets/icons/passwordIcon.svg";
+import emailIcon1 from "../../../assets/icons/emailIcon1.svg";
+import call from "../../../assets/icons/call.svg";
+import ntn from "../../../assets/icons/ntn.svg";
+import clipboard from "../../../assets/icons/clipboard.svg";
+
 
 const Register = () => {
   const [isBusiness, setIsBusiness] = useState(false);
@@ -22,14 +29,14 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center w-full p-4">
       <div className=" bg-opacity-20 backdrop-blur-md  rounded-lg  w-full max-w-md">
         {/* Logo */}
-        <div className="flex justify-center">
-          <img src={logo} alt="Logo" className="" />
-        </div>
+        <Link to='/' className="flex justify-center">
+          <img src={logo} alt="Logo" className="w-36 h-36" />
+        </Link>
 
         {/* Switch Button */}
-        <div className="flex justify-center space-x-4 mb-6 bg-white w-fit mx-auto p-1 rounded-full">
+        <div className="flex justify-center min-w-[335px] space-x-4 mb-6 bg-white w-fit mx-auto p-1 rounded-full">
           <button
-            className={`px-6 py-2 rounded-full transition-colors ${
+            className={`px-11.5 py-2 rounded-full transition-colors ${
               !isBusiness
                 ? "bg-[#FED800] text-white"
                 : "bg-transparent text-gray-500 hover:bg-gray-100"
@@ -39,7 +46,7 @@ const Register = () => {
             Private
           </button>
           <button
-            className={`px-6 py-2 rounded-full transition-colors ${
+            className={`px-11.5 py-2 rounded-full transition-colors ${
               isBusiness
                 ? "bg-[#FED800] text-white"
                 : "bg-transparent text-gray-700 hover:bg-gray-100"
@@ -62,8 +69,8 @@ const Register = () => {
         {/* Registration Form */}
         <form className="space-y-4 overflow-y-auto h-[40vh] max-w-[335px] mx-auto scrollbar-hide">
           {/* Common Fields */}
-          <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-            <FaUser className="text-[#FED700] mx-2" />
+          <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+            <img src={person} alt="" className="mr-2" />
             <input
               type="text"
               id="name"
@@ -73,8 +80,8 @@ const Register = () => {
             />
           </div>
 
-          <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-            <FaEnvelope className="text-[#FED700] mx-2" />
+          <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+            <img src={emailIcon1} alt="" className="mr-2" />
             <input
               type="email"
               id="email"
@@ -84,8 +91,8 @@ const Register = () => {
             />
           </div>
 
-          <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-            <FaLock className="text-[#FED700] mx-2" />
+          <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+            <img src={passwordIcon} alt="" className="mr-2" />
             <input
               type={showPassword ? "text" : "password"}
               id="password"
@@ -106,8 +113,8 @@ const Register = () => {
             </button>
           </div>
 
-          <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-            <FaLock className="text-[#FED700] mx-2" />
+          <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+            <img src={passwordIcon} alt="" className="mr-2" />
             <input
               type={showConfirmPassword ? "text" : "password"}
               id="confirmPassword"
@@ -131,19 +138,8 @@ const Register = () => {
           {/* Business-Specific Fields */}
           {isBusiness && (
             <>
-              <div className="flex items-center bg-[#808493] rounded-md py-3 px-2 ">
-                <FaBuilding className="text-[#FED700] mx-2" />
-                <input
-                  type="text"
-                  id="businessName"
-                  placeholder="Business Name"
-                  className="w-full bg-transparent text-[#E2E3E4] placeholder-[#E2E3E4] focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-                <FaPhone className="text-[#FED700] mx-2" />
+              <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+                <img src={call} alt="" className="mr-2" />
                 <input
                   type="tel"
                   id="contactNumber"
@@ -153,8 +149,8 @@ const Register = () => {
                 />
               </div>
 
-              <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-                <FaIdCard className="text-[#FED700] mx-2" />
+              <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+                <img src={clipboard} alt="" className="mr-2" />
                 <input
                   type="text"
                   id="registrationNo"
@@ -164,8 +160,8 @@ const Register = () => {
                 />
               </div>
 
-              <div className="flex items-center bg-[#808493] rounded-md py-3 px-2">
-                <FaHashtag className="text-[#FED700] mx-2" />
+              <div className="flex items-center bg-[#344C63] rounded-md py-4 px-2">
+              <img src={ntn} alt="" className="mr-2" />
                 <input
                   type="text"
                   id="ntnNumber"
@@ -180,17 +176,17 @@ const Register = () => {
           {/* Create Account Button */}
           <button
             type="submit"
-            className="w-full bg-[#FED700] text-white py-2 px-4 rounded-md hover:bg-opacity-30 transition-colors"
+            className="w-full bg-[#FED700] text-white py-3 px-4 rounded-md hover:bg-opacity-30 transition-colors"
           >
-            Create Account
+            {isBusiness ? "Create Account" : "Sign up" }
           </button>
         </form>
 
         {/* Already Have an Account? Log In */}
-        <p className="text-center text-white pb-10 text-sm">
-          Already have an account?{" "}
-          <Link to="/login" className="text-[#FED700] hover:underline">
-            Log In
+        <p className="text-center text-white  text-sm mt-2">
+          Already have an account?
+          <Link to="/login" className="text-[#FED700] hover:underline ml-1">
+            Log in
           </Link>
         </p>
       </div>

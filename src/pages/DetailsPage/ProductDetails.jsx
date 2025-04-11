@@ -1,10 +1,17 @@
-import React from "react";
-import Navbar from "../../components/layout/Navbar";
-import Footer from "../../components/layout/Footer";
+import React, { useEffect, useState } from "react";
 import mainImage from "../../assets/images/productImages/PImage.png";
 import fuelImage from "../../assets/images/icons/fuel.png";
 import mielageImage from "../../assets/images/icons/mielage.png";
 import dateImage from "../../assets/images/icons/calendar.png";
+import profileImage from "../../assets/images/profileImage.jpg";
+import {
+  FiEye,
+  FiEyeOff,
+  FiShoppingCart,
+  FiMessageCircle,
+  FiMapPin,
+  FiPhone,
+} from "react-icons/fi";
 import bodyStyleImage from "../../assets/images/icons/bodyStyle.png";
 import tranmissionImage from "../../assets/images/icons/transmission.png";
 import exteriorImage from "../../assets/images/icons/exterior.png";
@@ -19,6 +26,14 @@ import car4 from "../../assets/images/productImages/Pimage4.png";
 import car5 from "../../assets/images/productImages/Pimage5.png";
 import "./ProductDetails.css";
 const ProductDetails = () => {
+  const [showNumber, setShowNumber] = useState(false);
+
+  const phoneNumber = "123 456 7890";
+  const maskedNumber = phoneNumber.replace(/\d/g, "*").replace(/^.{3}/, "123");
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const carDetails = [
     {
       icon: bodyStyleImage,
@@ -62,6 +77,18 @@ const ProductDetails = () => {
     },
   ];
 
+  const popularFeatures = [
+    { label: "Exterior Color", value: "Red" },
+    { label: "Interior Color", value: "Grey" },
+    { label: "Drivetrain", value: "All-wheel Drive" },
+    { label: "MPG", value: "21-27" },
+    { label: "Fuel Type", value: "Gasoline" },
+    { label: "Transmission", value: "10-Speed Automatic" },
+    { label: "Engine", value: "2.0L I4 16V GDI DOHC Turbo" },
+    { label: "VIN", value: "5JKB5825TB8VC" },
+    { label: "Stock", value: "32,769 mi" },
+  ];
+
   const carImages = [car1, car2, car3, car4, car5];
 
   const settings = {
@@ -84,8 +111,7 @@ const ProductDetails = () => {
   };
 
   return (
-    <div className="bg-[#151F28] min-h-screen pt-20">
-      <Navbar />
+    <section className="bg-[#151F28] min-h-screen pt-4 md:pt-8 ">
       <div className="flex flex-col rounded-xl gap-10 max-w-screen px-12 lg:px-10 xl:px-28 mt-12 mx-auto lg:flex-row max-[500px]:px-6">
         {/* Left Section - Main Image and Slider */}
         <div className="w-full lg:w-[55%] xl:w-[65%]">
@@ -112,47 +138,68 @@ const ProductDetails = () => {
         </div>
 
         {/* Right Section - Car Details */}
-        <div className="w-full lg:min-w-[400px] pt-2 space-y-4">
-          <span className="bg-green-500 rounded text-white px-3 py-1">
-            Certified
-          </span>
-          <div className="flex justify-between gap-10 items-center mt-10 relative">
-            <h1 className="text-[#FED700] max-[500px]:text-lg max-[500px]:font-semibold text-2xl font-bold">
-              Nissan Murano SV
-            </h1>
-            <div className="text-2xl max-[500px]:text-lg max-[500px]:font-semibold text-gray-100 font-bold">
-              $56,895
-            </div>
-            <div className="text-gray-200 text-lg -top-8 absolute line-through right-0">
-              $66,985
+        <div className="sm:w-full lg:min-w-[400px] bg-gray-700 rounded-xl shadow-md p-4 space-y-6">
+          {/* Profile Header */}
+          <div className="flex gap-6">
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="size-20 rounded-full object-cover"
+            />
+            <div className="flex flex-col gap-1">
+              <h2 className="font-bold text-[#FED700] text-xl">Mark Jane</h2>
+              <p className="text-md text-gray-200">Member since: 4 years</p>
+              <p className="text-md text-gray-200">Account type: private</p>
+              <p className="text-sm text-green-600 font-medium mt-1">
+                ● User is online now!
+              </p>
+              <div className="flex items-center gap-2 text-gray-200 my-4">
+                <div className="bg-green-100 p-1 rounded-full flex items-center justify-center">
+                  <FiMapPin className="text-green-600 size-4" />
+                </div>
+                <span>70 Washington Street</span>
+              </div>
+              <a
+                href="#"
+                className="text-red-500 font-semibold underline hover:text-red-600"
+              >
+                See all ads
+              </a>
             </div>
           </div>
-          <ul className="text-gray-100 my-8 space-y-3">
-            <li className="flex gap-3 items-center">
-              <img src={dateImage} alt="Year" className="h-5 w-5" /> Year: 2029
-            </li>
-            <li className="flex gap-3 items-center">
-              <img src={mielageImage} alt="Mileage" className="h-5 w-5" />{" "}
-              Mileage: 15,000
-            </li>
-            <li className="flex gap-3 items-center">
-              <img src={fuelImage} alt="Fuel" className="h-5 w-5" /> Fuel Type:
-              Diesel
-            </li>
-          </ul>
-          <div className="flex gap-4">
-            <button className="bg-yellow-300 rounded-lg text-black drop-shadow-lg hover:bg-yellow-500 hover:cursor-pointer px-4 py-1">
-              Buy Now
+
+          {/* Mobile Number Toggle */}
+          <div className="bg-blue-200/50 flex items-center justify-between px-4 py-3 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-white rounded-full">
+                <FiPhone className="text-blue-500 cursor-pointer" />
+              </div>
+              <span className="text-lg font-semibold text-gray-800 tracking-wide cursor-pointer">
+                {showNumber ? phoneNumber : maskedNumber}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowNumber(!showNumber)}
+              className="text-[#FED700] hover:text-yellow-500 font-bold cursor-pointer"
+            >
+              {showNumber ? <FiEyeOff size={26} /> : <FiEye size={26} />}
             </button>
-            <button className="bg-yellow-300 rounded-lg text-black drop-shadow-lg hover:bg-yellow-500 hover:cursor-pointer px-4 py-1">
-              Chat
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button className="flex items-center justify-center gap-2 w-full sm:w-1/2 px-4 py-3 bg-[#FED700]  text-lg font-semibold rounded-md hover:bg-yellow-500 transition cursor-pointer">
+              <FiShoppingCart /> Buy Now
+            </button>
+            <button className="flex items-center justify-center gap-2 w-full sm:w-1/2 px-4 py-3 bg-[#FED700]  text-lg font-semibold rounded-md hover:bg-yellow-500 transition cursor-pointer">
+              <FiMessageCircle /> Chat
             </button>
           </div>
         </div>
       </div>
 
       {/* overviews section */}
-      <div className="max-[500px]:!mx-6 max-lg:mx-12 max-w-4xl lg:ml-10 xl:ml-28 my-10 py-10">
+      <div className="max-[500px]:!mx-6 max-lg:mx-12 max-w-4xl lg:ml-10 xl:ml-28 mt-6 py-10">
         {/* Basic Overview Section */}
         <h2 className="text-[#FED700] text-xl font-semibold mb-6">
           Basic Overview
@@ -171,7 +218,7 @@ const ProductDetails = () => {
 
         {/* Description Section */}
         <div className="border-gray-300 border-y mt-8 py-8">
-          <h3 className="text-[#FED700] text-lg font-semibold mb-4">
+          <h3 className="text-[#FED700] text-lg font-semibold mb-6">
             Description
           </h3>
           <p className="text-gray-100 text-sm leading-relaxed">
@@ -185,9 +232,26 @@ const ProductDetails = () => {
             See More
           </button>
         </div>
+
+        {/* Popular Features Section */}
+        <div className="py-8">
+          <h3 className="text-[#FED700] text-xl font-semibold mb-6">
+            Features
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {popularFeatures.map((item, index) => (
+              <div
+                key={index}
+                className="flex gap-4 justify-between border-b border-gray-600 py-2"
+              >
+                <span className="text-gray-400 font-medium">{item.label}</span>
+                <span className="text-white">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-      <Footer />
-    </div>
+    </section>
   );
 };
 

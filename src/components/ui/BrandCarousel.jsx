@@ -17,10 +17,10 @@ const settings = {
   slidesToShow: 5,
   slidesToScroll: 1,
   autoplay: true,
-  autoplaySpeed: 0,
+  autoplaySpeed: 3000,
   pauseOnHover: true,
   arrows: false,
-  cssEase: "linear",
+  cssEase: "ease",
   responsive: [
     {
       breakpoint: 1024,
@@ -39,8 +39,8 @@ const settings = {
 
 const BrandCarousel = () => {
   return (
-    <div className="max-w-[1200px] mx-6 sm:mx-10 xl:mx-auto">
-      <h2 className="text-gray-200 text-2xl font-semibold mt-20 text-left pl-3">
+    <div className="max-w-[1200px] mx-6 sm:mx-10 xl:mx-auto mt-28">
+      <h2 className="text-[#FED700] text-2xl font-semibold text-left pl-3">
         Brands
       </h2>
       <div className="max-w-[1200px] px-10 mx-auto overflow-hidden mt-5 border-3 border-[#293041] rounded-2xl p-2 bg-[#1D2834]">

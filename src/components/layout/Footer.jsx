@@ -8,6 +8,8 @@ import {
 } from "react-icons/fa";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-[#151F28] border-gray-500 border-t text-gray-800 w-full md:px-10 mx-auto pb-8 pt-14 px-8">
       <div className="flex flex-col gap-12 max-md:items-center max-w-[1200px] min-[794px]:flex-row md:justify-between mx-auto">
@@ -88,7 +90,7 @@ const Footer = () => {
 
       {/* Bottom Section */}
       <div className="border-t-[1px] text-gray-500 text-xs max-w-[1200px] mt-8 mx-auto pt-4">
-        Topcar, 2023 all rights reserved
+        Topcar, {currentYear} all rights reserved
       </div>
     </footer>
   );

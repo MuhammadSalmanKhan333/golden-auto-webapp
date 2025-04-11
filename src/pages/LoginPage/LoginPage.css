@@ -4,5 +4,14 @@
 
 .scrollbar-hide {
   -ms-overflow-style: none;
-  scrollbar-width: none; 
+  scrollbar-width: none;
+}
+
+:where(.css-dev-only-do-not-override-240cud).ant-carousel .slick-dots li {
+  background: #e9cc84 !important;
+}
+:where(.css-dev-only-do-not-override-240cud).ant-carousel
+  .slick-dots
+  li::after {
+  background: #fbbf24 !important;
 }

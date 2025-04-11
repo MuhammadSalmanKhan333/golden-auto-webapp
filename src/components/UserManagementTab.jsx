@@ -90,7 +90,7 @@ const UserManagementTab = () => {
           >
             <div className="flex justify-between items-center w-full pt-2 pb-6">
               <div className="flex flex-col">
-                <span className="text-start text-xl font-bold text-[#000022]">
+                <span className="text-start text-2xl font-bold text-[#000022]">
                   {section.title}
                 </span>
                 <span className="font-normal text-lg text-[#00002280]">
