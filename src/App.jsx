@@ -24,6 +24,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import BuyProduct from "./pages/BuyProduct/BuyProduct";
 import OrderDetails from "./pages/OrderDetailPage/OrderDetails";
+import Billing from "./pages/Billing/Billing";
 
 const Layout = () => {
   return (
@@ -100,6 +101,10 @@ const router = createBrowserRouter([
         path: "/edit-ad/:id",
         element: <PostAds editMode={true} />,
       },
+      {
+        path:"/billing",
+        element:<Billing/>
+      }
     ],
   },
   {
