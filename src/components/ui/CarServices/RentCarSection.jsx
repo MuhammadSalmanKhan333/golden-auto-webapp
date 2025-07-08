@@ -7,14 +7,38 @@ import car3 from "../../../assets/images/CarCard.png";
 import { Link } from "react-router-dom";
 
 const rentCarData = [
-  { id: 1, image: car1, name: "Mazda", subname: "MX2 2019", price: 400 },
-  { id: 2, image: car2, name: "Maserati", subname: "Levante 2021", price: 500 },
+  {
+    id: 1,
+    image: car1,
+    name: "Audi",
+    subname: "A8 2022",
+    price: 1900,
+    fuel: "Petrol",
+    seats: 4,
+    transmission: "Manual",
+    type: "Hatchback",
+  },
+  {
+    id: 2,
+    image: car2,
+    name: "Mercedes",
+    subname: "G-Class 2021",
+    price: 3200,
+    fuel: "Diesel",
+    seats: 5,
+    transmission: "Automatic",
+    type: "SUV",
+  },
   {
     id: 3,
     image: car3,
-    name: "Bentley",
-    subname: "Flying Spur 2019",
-    price: 700,
+    name: "BMW",
+    subname: "M5 2020",
+    price: 2800,
+    fuel: "Hybrid",
+    seats: 4,
+    transmission: "Manual",
+    type: "Sedan",
   },
 ];
 

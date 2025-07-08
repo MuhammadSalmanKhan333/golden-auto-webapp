@@ -12,7 +12,7 @@ const HomePage = () => {
       <HeroSection />
       <BrandCarousel />
       <CarServies />
-      <CarCategories />
+      {/* <CarCategories /> */}
       <LatestCar />
       <BannerSection />
     </div>

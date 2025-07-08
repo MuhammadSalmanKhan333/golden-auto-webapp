@@ -1,10 +1,13 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import logo from "../../assets/images/logo.svg";
 import logo1 from "../../assets/images/golden-auto.png";
-import { Link } from "react-router-dom";
-import { FaUserLarge } from "react-icons/fa6";
-import { MdNotifications } from "react-icons/md";
-import { FaUserAlt } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import MessageIcon from "../../assets/icons/message.png";
+import FavouriteIcon from "../../assets/icons/favorite.png";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../../features/authSlice";
+import NotificationDropdown from "../ui/NotificationDropdown";
+import UserDropdown from "../ui/UserDropdown";
 
 const useMediaQuery = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -25,23 +28,35 @@ const useMediaQuery = () => {
 };
 
 const Navbar = () => {
-  const [accountDropdown, setAccountDropdown] = useState(false);
-  const [notifDropdown, setNotifDropdown] = useState(false);
-  const dropdownRef = useRef(null);
   const isMobile = useMediaQuery();
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [currentMode, setCurrentMode] = useState("buyer"); // default is buyer
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setAccountDropdown(false);
-        setNotifDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    if (user?.account_type === "business") {
+      setCurrentMode("seller");
+    } else if (user?.account_type === "private") {
+      setCurrentMode("buyer");
+    }
+  }, [user]);
+
+  console.log("🚀 ~ Navbar ~ user:", user);
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  };
+
+  const handleSwitchMode = () => {
+    if (currentMode === "buyer") {
+      setCurrentMode("seller");
+      navigate("/dashboard");
+    } else {
+      setCurrentMode("buyer");
+      navigate("/");
+    }
+  };
 
   return (
     <div className="z-20 md:py-5 bg-gray-700">
@@ -59,198 +74,124 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <ul className="flex gap-8 lg:gap-16 list-none font-normal text-base text-white hover:cursor-pointer items-center m-0 p-0">
           <li className="hover:text-[#FED700]">
-            <Link to="/">Home</Link>
+            {currentMode === "buyer" ? (
+              <Link to="/">Home</Link>
+            ) : (
+              <Link to="/dashboard">Dashboard</Link>
+            )}
           </li>
-          <li className="hover:text-[#FED700]">
-            <Link to="/listing">Listing</Link>
-          </li>
+
+          {currentMode === "seller" ? (
+            <li className="relative group">
+              <span className="hover:text-[#FED700]">My Business</span>
+              <ul className="absolute top-full left-0 mt-2 w-48 bg-white text-sm font-medium text-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <li className="border-b border-gray-100">
+                  <Link
+                    to="/orders"
+                    className="block px-4 py-2 hover:bg-gray-100 rounded-t-xl"
+                  >
+                    Orders
+                  </Link>
+                </li>
+                <li className="border-b border-gray-100">
+                  <Link
+                    to="/my-ads"
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    Ads
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/earnings"
+                    className="block px-4 py-2 hover:bg-gray-100 rounded-b-xl"
+                  >
+                    Earnings
+                  </Link>
+                </li>
+              </ul>
+            </li>
+          ) : (
+            <li className="hover:text-[#FED700]">
+              <Link to="/listing">Listing</Link>
+            </li>
+          )}
+
           <li className="hover:text-[#FED700]">
             <Link to="/contact">{isMobile ? "Contact" : "Contact Us"}</Link>
           </li>
+
           <li>
             <div className="md:hidden flex gap-3 md:gap-4 items-center">
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => {
-                    setNotifDropdown(!notifDropdown);
-                    setAccountDropdown(false);
-                  }}
-                  className="text-white text-2xl hover:text-yellow-400 transition"
-                >
-                  <MdNotifications />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    3
-                  </span>
-                </button>
-                {notifDropdown && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-800">
-                        Notifications
-                      </p>
-                    </div>
-                    <Link
-                      to="#"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      New message received
-                    </Link>
-                    <Link
-                      to="#"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Your ad was approved
-                    </Link>
-                    <Link
-                      to="#"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      New cars matching your search
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => {
-                    setAccountDropdown(!accountDropdown);
-                    setNotifDropdown(false);
-                  }}
-                  className="text-white hover:text-[#FED700] transition"
-                >
-                  <FaUserAlt size={20} />
-                </button>
-                {accountDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                    <Link
-                      to="/login"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      to="/register"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Register
-                    </Link>
-                    <Link
-                      to="/settings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Settings
-                    </Link>
-                    <Link
-                      to="/my-ads"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
-                    >
-                      My Ads
-                    </Link>
-                  </div>
-                )}
-              </div>
+              {user && <NotificationDropdown />}
+              <UserDropdown user={user} handleLogout={handleLogout} />
             </div>
           </li>
         </ul>
+
+        {/* Desktop Icons */}
         <div className="hidden md:flex gap-3 md:gap-4 items-center">
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => {
-                setNotifDropdown(!notifDropdown);
-                setAccountDropdown(false);
-              }}
-              className="text-white text-2xl hover:text-[#FED700] transition"
-            >
-              <MdNotifications />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                3
-              </span>
-            </button>
-            {notifDropdown && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-800">
-                    Notifications
-                  </p>
-                </div>
+          {/* Desktop Notification Dropdown - Only show when logged in */}
+          {user && (
+            <>
+              <NotificationDropdown />
+              <div className="relative">
                 <Link
-                  to="#"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  New message received
-                </Link>
-                <Link
-                  to="#"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Your ad was approved
-                </Link>
-                <Link
-                  to="#"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  New cars matching your search
-                </Link>
-              </div>
-            )}
-          </div>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => {
-                setAccountDropdown(!accountDropdown);
-                setNotifDropdown(false);
-              }}
-              className="text-white hover:text-[#FED700] transition"
-            >
-              <FaUserLarge size={20} />
-            </button>
-            {accountDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                <Link
-                  to="/login"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Register
-                </Link>
-                <Link
-                  to="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Settings
-                </Link>
-                <Link
+                  className="text-white hover:text-[#FED700] transition"
                   to="/messages"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
                 >
-                  Messages
-                </Link>
-                <Link
-                  to="/my-ads"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
-                >
-                  My Ads
-                </Link>
-                <Link
-                  to="/dashboard"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/account-sellings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
-                >
-                  Account Sellings
+                  <img
+                    src={MessageIcon}
+                    alt="Message"
+                    className="w-6 h-6 inline-block align-middle"
+                  />
                 </Link>
               </div>
-            )}
-          </div>
+            </>
+          )}
+          {user && currentMode === "buyer" && (
+            <div className="relative">
+              <Link
+                className="text-white hover:text-[#FED700] transition"
+                to="/favorites"
+              >
+                <img
+                  src={FavouriteIcon}
+                  alt="Favourite"
+                  className="w-6 h-6 inline-block align-middle"
+                />
+              </Link>
+            </div>
+          )}
+
+          {user?.account_type === "private" && currentMode === "buyer" && (
+            <>
+              <Link
+                to="/orders"
+                className="text-white hover:text-[#FED700] transition font-medium"
+              >
+                Orders
+              </Link>
+              <button
+                onClick={handleSwitchMode}
+                className="text-white hover:text-[#FED700] transition font-medium cursor-pointer"
+              >
+                Switch to Selling
+              </button>
+            </>
+          )}
+
+          {user?.account_type === "private" && currentMode === "seller" && (
+            <button
+              onClick={handleSwitchMode}
+              className="text-white hover:text-[#FED700] transition font-medium cursor-pointer"
+            >
+              Switch to Buying
+            </button>
+          )}
+
+          {/* Desktop Account Dropdown */}
+          <UserDropdown user={user} handleLogout={handleLogout} />
         </div>
       </nav>
     </div>

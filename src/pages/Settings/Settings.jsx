@@ -5,7 +5,6 @@ import {
   FaLock,
   FaHeart,
   FaShieldAlt,
-  FaUsersCog,
   FaClock,
   FaShoppingBag,
   FaChevronRight,
@@ -15,12 +14,13 @@ import UserManagementTab from "../../components/UserManagementTab";
 import CircularProgressBar from "../../components/CircularProgressBar";
 import SecurityTab from "../../components/SecurityTab";
 import ProfileTab from "../../components/ProfileTab";
+import { useSelector } from "react-redux";
 // import { HiDocumentDownload } from "react-icons/hi";
 const tabs = [
   { id: "my-profile", label: "My Profile", icon: <FaUser /> },
   { id: "my-listing", label: "My Listing", icon: <FaList /> },
   { id: "security", label: "Security", icon: <FaLock /> },
-  { id: "favorites", label: "Favorites", icon: <FaHeart /> },
+  // { id: "favorites", label: "Favorites", icon: <FaHeart /> },
   {
     id: "buyers-protection",
     label: "Buyers Protection Program",
@@ -36,11 +36,11 @@ const tabs = [
     label: "Scheduled Appointments",
     icon: <FaClock />,
   },
-  { id: "my-orders", label: "My Orders", icon: <FaShoppingBag /> },
+  // { id: "my-orders", label: "My Orders", icon: <FaShoppingBag /> },
 ];
 
 const contentData = {
-  "my-profile": <ProfileTab />,
+  "my-profile": <ProfileTab  />,
   "my-listing": (
     <p className="text-gray-700 text-sm">View and edit your listings.</p>
   ),
@@ -62,10 +62,14 @@ const contentData = {
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("security");
+    const profileCompletion = useSelector(
+    (state) => state.auth.profileCompletion
+  );
+  console.log(profileCompletion)
   return (
     <section className="bg-[#151F28] min-h-screen pt-6">
       <div className="px-5 sm:px-10 xl:px-12">
-        <div className=" min-h-screen  flex max-w-[1400px] mx-auto mt-6">
+        <div className=" min-h-screen  flex max-w-[1200px] mx-auto mt-6">
           <div className="w-full">
             <h2 className="text-4xl font-semibold text-[#FED700] mb-4">
               Settings
@@ -75,18 +79,19 @@ const SettingsPage = () => {
               <div className="w-full md:w-[40%]">
                 <div className="bg-[#FED700] text-white p-6 rounded-lg flex-row lg:flex-row flex md:flex-col  gap-6 text-center">
                   <div className="flex justify-center items-center">
-                    <CircularProgressBar progress={85} />
+                    <CircularProgressBar progress={profileCompletion} />
                   </div>
                   <div className="flex flex-col gap-3 lg:justify-between">
                     <div>
                       <p className="text-xl font-bold text-[#000]">
                         Profile Information
                       </p>
-                      <p className="text-sm text-[#000]">
+                      {/* <p className="text-sm text-[#000]">
                         Lorem ipsum dolor sit amet
-                      </p>
+                      </p> */}
                     </div>
-                    <button className="bg-white text-[#2596be] cursor-pointer font-semibold py-3 px-4 rounded-md">
+                    <button   onClick={() => setActiveTab('my-profile')}
+                    className="bg-white text-[#2596be] cursor-pointer font-semibold py-3 px-4 rounded-md">
                       Complete your profile
                     </button>
                   </div>

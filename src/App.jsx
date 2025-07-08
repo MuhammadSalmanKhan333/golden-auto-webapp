@@ -1,5 +1,6 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { LoadScript } from "@react-google-maps/api";
 import RegistePage from "./pages/RegistePage/RegistePage";
 import LoginPage from "./pages/LoginPage/LoginPage";
 import HomePage from "./pages/HomePage/HomePage";
@@ -16,13 +17,19 @@ import Footer from "./components/layout/Footer";
 import BusinessDashboard from "./components/BusinessDashboard";
 import SellingListings from "./components/SellingListings";
 import Messages from "./pages/Messages/Messages";
+import PostAds from "./pages/PostAds/PostAds";
+import FavoritePage from "./components/favorites";
+import Orders from "./pages/Orders";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import BuyProduct from "./pages/BuyProduct/BuyProduct";
+import OrderDetails from "./pages/OrderDetailPage/OrderDetails";
 
 const Layout = () => {
   return (
     <>
       <Navbar />
       <Outlet />
-      {/* <ChatScreen /> */}
       <Footer />
     </>
   );
@@ -38,7 +45,7 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "/details",
+        path: "/details/:id",
         element: <ProductDetails />,
       },
       {
@@ -46,8 +53,20 @@ const router = createBrowserRouter([
         element: <Listing />,
       },
       {
+        path: "/favorites",
+        element: <FavoritePage />,
+      },
+      {
         path: "/my-ads",
         element: <MyAds />,
+      },
+      {
+        path: "/orders",
+        element: <Orders />,
+      },
+      {
+        path: "/orderdetails",
+        element: <OrderDetails />,
       },
       {
         path: "/contact",
@@ -66,8 +85,20 @@ const router = createBrowserRouter([
         element: <BusinessDashboard />,
       },
       {
-        path: "/account-sellings",
+        path: "/my-listings",
         element: <SellingListings />,
+      },
+      {
+        path: "/buy-vehicle/:id",
+        element: <BuyProduct />,
+      },
+      {
+        path: "/post-ads",
+        element: <PostAds />,
+      },
+      {
+        path: "/edit-ad/:id",
+        element: <PostAds editMode={true} />,
       },
     ],
   },
@@ -82,7 +113,15 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <LoadScript
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+      libraries={["places"]}
+    >
+      <RouterProvider router={router} />
+      <ToastContainer position="top-right" autoClose={3000} />
+    </LoadScript>
+  );
 }
 
 export default App;

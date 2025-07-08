@@ -1,114 +1,276 @@
 import React, { useEffect, useState } from "react";
 import mainImage from "../../assets/images/productImages/PImage.png";
-import fuelImage from "../../assets/images/icons/fuel.png";
-import mielageImage from "../../assets/images/icons/mielage.png";
-import dateImage from "../../assets/images/icons/calendar.png";
+import warrantyImage from "../../assets/images/icons/Warranty.png";
+import priceImage from "../../assets/images/icons/Price.png";
+import modelImage from "../../assets/images/icons/model.png";
+import conditionImage from "../../assets/images/icons/condition.png";
 import profileImage from "../../assets/images/profileImage.jpg";
+import { Link } from "react-router-dom";
+import bodyStyleImage from "../../assets/images/icons/bodyStyle.png";
+import yearImage from "../../assets/images/icons/Release-year.png";
+import Slider from "react-slick";
+import "./ProductDetails.css";
+import { useParams } from "react-router-dom";
+import utils from "../../utils/utils";
+import { fetchData } from "../../services/apiService";
+import FavouriteButton from "../../components/ui/AddToFav";
 import {
-  FiEye,
-  FiEyeOff,
   FiShoppingCart,
   FiMessageCircle,
   FiMapPin,
-  FiPhone,
+  FiLoader,
 } from "react-icons/fi";
-import bodyStyleImage from "../../assets/images/icons/bodyStyle.png";
-import tranmissionImage from "../../assets/images/icons/transmission.png";
-import exteriorImage from "../../assets/images/icons/exterior.png";
-import interiorImage from "../../assets/images/icons/interior.png";
-import typeImage from "../../assets/images/icons/type.png";
-import engineImage from "../../assets/images/icons/engine.png";
-import Slider from "react-slick";
-import car1 from "../../assets/images/productImages/Pimage1.png";
-import car2 from "../../assets/images/productImages/Pimage2.png";
-import car3 from "../../assets/images/productImages/Pimage3.png";
-import car4 from "../../assets/images/productImages/Pimage4.png";
-import car5 from "../../assets/images/productImages/Pimage5.png";
-import "./ProductDetails.css";
+import { useSelector } from "react-redux";
+import { FaUser } from "react-icons/fa";
 const ProductDetails = () => {
-  const [showNumber, setShowNumber] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const { id } = useParams(); // from URL
+  const [car, setCar] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { user } = useSelector((state) => state.auth);
+  const [users, setUser] = useState("");
 
-  const phoneNumber = "123 456 7890";
-  const maskedNumber = phoneNumber.replace(/\d/g, "*").replace(/^.{3}/, "123");
+  useEffect(() => {
+    // Get user from localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  const fetchCarDetails = async () => {
+    try {
+      setLoading(true);
+      setError(""); // Clear previous error if any
+
+      const response = await fetchData("vehicles", {
+        params: {
+          "filters[id]": id,
+          "populate[0]": "posted_by",
+          "populate[1]": "category.category",
+          "populate[2]": "category.sub_category",
+          "populate[3]": "brand.brand",
+          "populate[4]": "brand.model",
+        },
+      });
+
+      setCar(response.data[0] || null);
+      console.log(response.data[0]);
+    } catch (err) {
+      console.error("Api Error:", err);
+      setError("Failed to load car details. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCarDetails();
+  }, [id]);
+
+  const carData = {
+    image: car.picture?.picture?.[0]
+      ? utils.BASE_URL_MEDIA + car.picture.picture[0]
+      : mainImage,
+
+    images: car.picture?.picture
+      ? car.picture.picture.map((img) => utils.BASE_URL_MEDIA + img)
+      : [mainImage],
+
+    seller: {
+      name: car.posted_by?.username || "Not provided",
+      image: car.posted_by?.picture
+        ? utils.BASE_URL_MEDIA + car.posted_by?.picture
+        : profileImage,
+      contact: car.posted_by?.contact || "Not provided",
+      accountType: car.posted_by?.account_type || "Not specified",
+      createdAt: car.posted_by?.createdAt || "Not provided",
+    },
+    location: car.location?.Address,
+    name: car.name?.split("|")[0]?.trim(),
+    year: car.year,
+    price: car.price,
+    feul: car.feul_type,
+    kilometer: car.kilometer,
+    transmission: car.transmission,
+    bodyType: car.body_type,
+    condition: car.condition,
+    // 🆕 Show 'Yes' if true, 'No' if false
+    warrenty: car.warrenty ? "Yes" : "No",
+    // 🆕 Brand name + icon
+    brand: {
+      name: car.brand?.brand?.name || "Unknown",
+      icon: car.brand?.brand?.icon
+        ? utils.BASE_URL_MEDIA + car.brand.brand.icon
+        : null,
+    },
+    model: {
+      name: car.brand?.model?.name || "Unknown",
+    },
+    description: car.description,
+    color: {
+      interior: car.information?.interior_color || "N/A",
+      exterior:
+        car.information?.exterior_color ||
+        car.information?.features?.color ||
+        "N/A",
+    },
+    subCategory: car.category?.sub_category?.name || "Unknown",
+    // Other vehicle info (optional - only if exists)
+    seat: car.information?.seat || car.information?.features?.seat,
+    door: car.information?.features?.door,
+    engine: car.information?.features?.engine,
+  };
+
+  const vehicle = 44;
+  const seller = 85;
+  const buyer = 81;
+  const chatOpen = true;
+
+  const userCreatedAt = new Date(carData.seller.createdAt);
+  const now = new Date();
+
+  let years = now.getFullYear() - userCreatedAt.getFullYear();
+  let months = now.getMonth() - userCreatedAt.getMonth();
+  let days = now.getDate() - userCreatedAt.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  let joinedSince = "";
+  if (years > 0) {
+    joinedSince = `${years} years ago`;
+  } else if (months > 0) {
+    joinedSince = `${months} months ago`;
+  } else {
+    joinedSince = `${days} days ago`;
+  }
+
   const carDetails = [
     {
       icon: bodyStyleImage,
-      label: "Body Style",
-      value: "SUV",
+      label: "Car Name",
+      value: carData.name || "Not provided",
     },
     {
-      icon: fuelImage,
-      label: "Fuel Type",
-      value: "Gas",
+      icon: bodyStyleImage,
+      label: "Sub Category Name",
+      value: carData.subCategory || "Not provided",
     },
     {
-      icon: mielageImage,
-      label: "Mileage",
-      value: "Gas",
+      icon: carData.brand.icon,
+      label: "Brand",
+      value: carData.brand.name || "Not provided",
     },
     {
-      icon: tranmissionImage,
-      label: "Transmission",
-      value: "Automatic",
+      icon: modelImage,
+      label: "Model",
+      value: carData.model.name || "Not provided",
     },
     {
-      icon: exteriorImage,
-      label: "Exterior Color",
-      value: "Red",
+      icon: yearImage,
+      label: "Year",
+      value: carData.year || "Not provided",
     },
     {
-      icon: interiorImage,
-      label: "Interior Color",
-      value: "White",
+      icon: priceImage,
+      label: "Price",
+      value: carData.price || "Not provided",
     },
     {
-      icon: typeImage,
-      label: "Drive Type",
-      value: "4WD",
+      icon: conditionImage,
+      label: "Condition",
+      value: carData.condition || "Not provided",
     },
     {
-      icon: engineImage,
-      label: "Engine",
-      value: "2 Cylinder",
+      icon: warrantyImage,
+      label: "Warranty",
+      value: carData.warrenty || "Not provided",
     },
   ];
 
   const popularFeatures = [
-    { label: "Exterior Color", value: "Red" },
-    { label: "Interior Color", value: "Grey" },
-    { label: "Drivetrain", value: "All-wheel Drive" },
-    { label: "MPG", value: "21-27" },
-    { label: "Fuel Type", value: "Gasoline" },
-    { label: "Transmission", value: "10-Speed Automatic" },
-    { label: "Engine", value: "2.0L I4 16V GDI DOHC Turbo" },
-    { label: "VIN", value: "5JKB5825TB8VC" },
-    { label: "Stock", value: "32,769 mi" },
+    {
+      label: "Exterior Color",
+      value: carData.color.exterior || "Not provided",
+    },
+    {
+      label: "Interior Color",
+      value: carData.color.interior || "Not provided",
+    },
+    { label: "Body Type", value: carData.bodyType || "Not specified" },
+    { label: "Seats", value: carData.seat || "Not specified" },
+    { label: "Fuel Type", value: carData.feul || "Not Specified" },
+    { label: "Transmission", value: carData.transmission || "Not Specified" },
+    { label: "Milegage", value: carData.kilometer || "Mileage not provided" },
+    { label: "Engine", value: carData.engine || "Engine info missing" },
+    { label: "Doors", value: carData.door || "Doors info missing" },
   ];
 
-  const carImages = [car1, car2, car3, car4, car5];
-
+  const imageCount = carData.images.length;
+  const slidesToShow = 3; // Number of images to show in the slider
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: imageCount > slidesToShow ? true : false,
     speed: 500,
-    slidesToShow: 5, // Show 5 images at a time
+    slidesToShow,
     slidesToScroll: 1,
-    arrows: true, // Enable Slick's default arrows
+    arrows: true,
+    swipe: imageCount > slidesToShow,
+    draggable: imageCount > slidesToShow,
     responsive: [
       {
-        breakpoint: 768,
-        settings: { slidesToShow: 3 },
-      },
-      {
-        breakpoint: 480,
-        settings: { slidesToShow: 2 },
+        breakpoint: 600,
+        settings: {
+          slidesToShow: Math.min(2, imageCount),
+          swipe: imageCount > 2,
+          draggable: imageCount > 2,
+          infinite: imageCount > 2,
+        },
       },
     ],
   };
+
+  if (loading) {
+    return (
+      <section className="min-h-screen flex items-center justify-center bg-[#151F28]">
+        <div className="flex flex-col items-center">
+          <FiLoader className="animate-spin text-[#FED700] text-4xl mb-4" />
+          <p className="text-[#FED700] text-lg font-medium">
+            Loading car details...
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="min-h-screen flex flex-col items-center justify-center bg-[#151F28] space-y-4">
+        <p className="text-red-500 text-lg font-medium">
+          Something went wrong: {error}
+        </p>
+        <button
+          onClick={fetchCarDetails} // you need to define this function
+          className="px-6 py-2 bg-[#FED700] hover:bg-yellow-500 text-black font-semibold rounded-md transition"
+        >
+          Retry
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[#151F28] min-h-screen pt-4 md:pt-8 ">
@@ -116,19 +278,23 @@ const ProductDetails = () => {
         {/* Left Section - Main Image and Slider */}
         <div className="w-full lg:w-[55%] xl:w-[65%]">
           <img
-            src={mainImage}
-            alt="Car"
-            className="h-[450px] rounded-xl shadow-xl w-full object-cover"
+            src={selectedImage || carData.image}
+            alt={carData.name}
+            className=" h-full sm:h-[450px] rounded-xl shadow-xl w-full object-contain sm:object-cover "
           />
           {/* Image Slider */}
           <div className="w-[95%] mt-5 mx-auto">
             <Slider {...settings} className="mt-4 slick-slider">
-              {carImages.map((img, index) => (
+              {carData.images.map((img, index) => (
                 <div key={index} className="px-1">
                   <img
                     src={img}
                     alt={`Car ${index + 1}`}
-                    className="border-2 border-transparent h-16 rounded-xl w-full cursor-pointer hover:border-red-500 object-cover"
+                    className={`border-2 h-16 rounded-xl w-full cursor-pointer object-cover ${
+                      selectedImage === img
+                        ? "border-red-500"
+                        : "border-transparent"
+                    }`}
                     onClick={() => setSelectedImage(img)}
                   />
                 </div>
@@ -138,62 +304,72 @@ const ProductDetails = () => {
         </div>
 
         {/* Right Section - Car Details */}
-        <div className="sm:w-full lg:min-w-[400px] bg-gray-700 rounded-xl shadow-md p-4 space-y-6">
+        <div className="sm:w-full lg:max-w-[400px] bg-gray-700 rounded-xl shadow-md p-4 space-y-6">
           {/* Profile Header */}
           <div className="flex gap-6">
             <img
-              src={profileImage}
-              alt="Profile"
+              src={carData.seller.image}
+              alt={carData.seller.name}
               className="size-20 rounded-full object-cover"
             />
             <div className="flex flex-col gap-1">
-              <h2 className="font-bold text-[#FED700] text-xl">Mark Jane</h2>
-              <p className="text-md text-gray-200">Member since: 4 years</p>
-              <p className="text-md text-gray-200">Account type: private</p>
-              <p className="text-sm text-green-600 font-medium mt-1">
-                ● User is online now!
+              <h2 className="font-bold text-[#FED700] text-xl capitalize">
+                {carData.seller.name}
+              </h2>
+              <p className="text-sm text-[#FED700] font-medium">
+                Member since:
+                <span className="text-gray-100 pl-1">{joinedSince}</span>
               </p>
-              <div className="flex items-center gap-2 text-gray-200 my-4">
+              <p className="text-sm text-[#FED700] font-medium">
+                Account type:{" "}
+                <span className="text-gray-100 pl-3">
+                  {carData.seller.accountType}
+                </span>
+              </p>
+              <p className="text-sm  text-[#FED700] font-medium mt-1 hover:text-yellow-200 transition cursor-pointer">
+                <Link to="">View Profile</Link>
+              </p>
+
+              <div className="flex items-start gap-2 text-gray-200 my-3">
                 <div className="bg-green-100 p-1 rounded-full flex items-center justify-center">
                   <FiMapPin className="text-green-600 size-4" />
                 </div>
-                <span>70 Washington Street</span>
+                <span className="text-justify pr-5 text-sm font-medium">
+                  {carData.location}
+                </span>
               </div>
-              <a
-                href="#"
+              <Link
+                to="/my-ads"
                 className="text-red-500 font-semibold underline hover:text-red-600"
               >
                 See all ads
-              </a>
+              </Link>
             </div>
           </div>
 
-          {/* Mobile Number Toggle */}
-          <div className="bg-blue-200/50 flex items-center justify-between px-4 py-3 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white rounded-full">
-                <FiPhone className="text-blue-500 cursor-pointer" />
-              </div>
-              <span className="text-lg font-semibold text-gray-800 tracking-wide cursor-pointer">
-                {showNumber ? phoneNumber : maskedNumber}
-              </span>
-            </div>
-            <button
-              onClick={() => setShowNumber(!showNumber)}
-              className="text-[#FED700] hover:text-yellow-500 font-bold cursor-pointer"
-            >
-              {showNumber ? <FiEyeOff size={26} /> : <FiEye size={26} />}
-            </button>
-          </div>
+          <FavouriteButton userId={users?.id} vehicleId={id} user={user} />
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <button className="flex items-center justify-center gap-2 w-full sm:w-1/2 px-4 py-3 bg-[#FED700]  text-lg font-semibold rounded-md hover:bg-yellow-500 transition cursor-pointer">
+            <Link
+              to={!user ? "/login" : "/buy-vehicle/" + id}
+              state={{ carData: car }}
+              className="flex items-center justify-center gap-2 w-full sm:w-1/2 px-4 py-3 bg-[#FED700]  text-lg font-semibold rounded-md hover:bg-yellow-500 transition cursor-pointer"
+            >
               <FiShoppingCart /> Buy Now
-            </button>
-            <button className="flex items-center justify-center gap-2 w-full sm:w-1/2 px-4 py-3 bg-[#FED700]  text-lg font-semibold rounded-md hover:bg-yellow-500 transition cursor-pointer">
+            </Link>
+            <Link
+              to={!user ? "/login" : "/messages"}
+              state={{
+                vehicle: Number(id),
+                seller: car?.posted_by?.id,
+                buyer: user?.id,
+                chatOpen: true,
+              }}
+              className="flex items-center justify-center gap-2 w-full sm:w-1/2 px-4 py-3 bg-[#FED700] text-lg font-semibold rounded-md hover:bg-yellow-500 transition cursor-pointer"
+            >
               <FiMessageCircle /> Chat
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -207,9 +383,9 @@ const ProductDetails = () => {
         <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-4">
           {carDetails.map((item, index) => (
             <div key={index} className="flex gap-4 items-center">
-              <img src={item.icon} alt={item.label} className="h-6 w-6" />
+              <img src={item.icon} alt={item.label} className="size-7" />
               <div>
-                <p className="text-gray-500 text-sm">{item.label}</p>
+                <p className="text-gray-500 text-xs">{item.label}</p>
                 <p className="text-white font-medium">{item.value}</p>
               </div>
             </div>
@@ -222,11 +398,7 @@ const ProductDetails = () => {
             Description
           </h3>
           <p className="text-gray-100 text-sm leading-relaxed">
-            Contrary to popular belief, Lorem Ipsum is not simply random text.
-            It has roots in classical Latin literature from 45 BC, making it
-            over 2000 years old. Richard McClintock, a Latin professor at
-            Hampden-Sydney College in Virginia, looked up one of the more
-            obscure Latin words, consectetur, from a Lorem Ipsum passage...
+            {carData.description || "Description not available"}
           </p>
           <button className="text-red-500 font-medium hover:cursor-pointer hover:underline mt-2">
             See More

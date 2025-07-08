@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MdOutlineLocationOn, MdSearch } from "react-icons/md";
-import { FaRegHeart, FaHeart, FaRegStar, FaStar } from "react-icons/fa";
-import { FiEdit, FiTrash2, FiEye, FiEyeOff } from "react-icons/fi";
-import Navbar from "../../components/layout/Navbar";
-import Footer from "../../components/layout/Footer";
+import { FaRegHeart, FaHeart, FaPlus } from "react-icons/fa";
+import { FiEdit, FiTrash2, FiEye } from "react-icons/fi";
 import car1 from "../../assets/images/car1.png";
+import { deleteData, fetchData, putData } from "../../services/apiService";
+import utils from "../../utils/utils";
+import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
 
 const tabOptions = [
   "View All",
@@ -19,80 +21,124 @@ export default function MyAds() {
   const [favorites, setFavorites] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const postedBy_id = userData?.id;
+
+  const fetchListings = async () => {
+    try {
+      setLoading(true);
+      console.log("🚀 ~ fetchListings ~ postedBy_id:", postedBy_id);
+      const response = await fetchData(
+        `vehicles?populate=category.category&filters[posted_by][id]=${postedBy_id}`
+      );
+      console.log("🚀 ~ fetchListings ~ response:", response);
+      setListings(response?.data || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load listings. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (postedBy_id) {
+      fetchListings();
+    } else {
+      setError("User not found. Please log in.");
+      alert("User not found. Please log in.");
+      setLoading(false);
+    }
+  }, [postedBy_id]);
+
+  const handleDelete = async (documentId) => {
+    console.log("🚀 ~ handleDelete ~ documentId:", documentId);
+    const confirm = window.confirm(
+      "Are you sure you want to delete this listing?"
+    );
+    if (!confirm) return;
+    try {
+      await deleteData(`vehicles/${documentId}`);
+      // Remove deleted item from state
+      setListings((prev) =>
+        prev.filter((item) => item.documentId !== documentId)
+      );
+      toast.success("Listing deleted successfully!");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete the listing. Please try again.");
+    }
+  };
+
+  console.log("🚀 ~ MyAds ~ listings:", listings);
   const toggleFavorite = (id) => {
     if (favorites.includes(id)) {
-      setFavorites(favorites.filter(favId => favId !== id));
+      setFavorites(favorites.filter((favId) => favId !== id));
     } else {
       setFavorites([...favorites, id]);
     }
   };
 
-  // Simulated ads data for demonstration
-  const myAds = [
-    {
-      id: 1,
-      title: "Toyota Corolla 2020",
-      location: "Lahore, Pakistan",
-      price: "3,200,000",
-      image: car1,
-      status: "Active Ads",
-      date: "Today 10:30 AM",
-      featured: true,
-      views: 124,
-    },
-    {
-      id: 2,
-      title: "Honda Civic 2019",
-      location: "Karachi, Pakistan",
-      price: "3,000,000",
-      image: car1,
-      status: "Inactive Ads",
-      date: "Yesterday 4:15 PM",
-      featured: false,
-      views: 89,
-    },
-    {
-      id: 3,
-      title: "Suzuki Cultus 2021",
-      location: "Islamabad, Pakistan",
-      price: "2,500,000",
-      image: car1,
-      status: "Pending Ads",
-      date: "2 days ago",
-      featured: true,
-      views: 45,
-    },
-  ];
+  const handleAvailability = async (availability, documentId) => {
+    const newStatus =
+      availability?.toLowerCase() === "pending" ? "Available" : "Pending";
+    console.log("🚀 ~ handleAvailability ~ newStatus:", newStatus, documentId);
 
-  const filteredAds =
-    selectedTab === "View All"
-      ? myAds.filter(ad => 
-          ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          ad.location.toLowerCase().includes(searchQuery.toLowerCase())
+    const confirm = window.confirm(
+      `Are you sure you want to change Vehicle Status to "${newStatus}"?`
+    );
+    if (!confirm) return;
+
+    try {
+      await putData(`/vehicles/${documentId}`, {
+        data: {
+          availability: newStatus,
+        },
+      });
+      setListings((prevListings) =>
+        prevListings.map((item) =>
+          item.documentId === documentId
+            ? { ...item, availability: newStatus }
+            : item
         )
-      : myAds.filter((ad) => 
-          ad.status === selectedTab && (
-            ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ad.location.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        );
+      );
+      toast.success(`Vehicle Status updated to ${newStatus}!`);
+    } catch (error) {
+      console.error("Failed to update availability", error);
+    }
+  };
 
   return (
     <>
-      <div className="bg-gray-100 min-h-screen pt-6 pb-16">
+      <div className="bg-[#151F28] min-h-screen pt-6 pb-16">
         <div className="max-w-[1200px] mx-auto px-4">
-          <h2 className="text-2xl font-semibold mb-6">Manage and view your Ads</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-[28px] font-bold text-[#FED700]">
+              My Listings
+            </h2>
+            <Link
+              to="/post-ads"
+              className="flex items-center cursor-pointer gap-2 bg-[#FED700] font-medium shadow-md px-4 py-2 rounded hover:bg-yellow-400 transition-all duration-200"
+            >
+              <FaPlus />
+              Add Listing
+            </Link>
+          </div>
 
           {/* Search Field */}
           <div className="mb-6 relative">
             <div className="relative max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MdSearch className="text-gray-400" size={20} />
+                <MdSearch className="text-gray-800" size={24} />
               </div>
               <input
                 type="text"
                 placeholder="Search by ad title or location..."
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FED700] focus:border-transparent transition-all duration-200"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FED700] focus:border-transparent transition-all duration-200"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -121,12 +167,12 @@ export default function MyAds() {
 
           {/* Modern Tabs */}
           <div className="relative mb-8">
-            <div className="flex space-x-1 border-b border-gray-200">
+            <div className="flex space-x-2 border-b border-gray-200">
               {tabOptions.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium relative transition-all duration-200
+                  className={`px-4 py-2 mb-2 text-sm font-medium relative transition-all duration-200 
                     ${
                       selectedTab === tab
                         ? "text-[#FED700]"
@@ -143,91 +189,114 @@ export default function MyAds() {
           </div>
 
           {/* Ads List */}
-          {filteredAds?.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#FED700]"></div>
+              <span className="ml-2 text-[#FED700]">Loading...</span>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center">{error}</div>
+          ) : listings.length === 0 ? (
+            <div className="text-gray-400 text-center">No listings found.</div>
+          ) : (
             <div className="grid grid-cols-1 gap-4">
-              {filteredAds.map((ad) => (
-                <div key={ad.id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
+              {listings.map((listing) => (
+                <div
+                  key={listing.id}
+                  className="bg-[#1c2331] rounded-xl shadow-sm overflow-hidden border-2 border-[#293041] hover:shadow-md transition-shadow"
+                >
                   <div className="p-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                       {/* Image */}
                       <div className="relative w-full sm:w-48 h-40 bg-gray-100 rounded overflow-hidden">
-                        <img 
-                          src={ad.image} 
-                          alt={ad.title} 
-                          className="w-full h-full object-cover"
+                        <img
+                          src={`${utils.BASE_URL_MEDIA}${listing.picture?.picture?.[0]}`}
+                          alt={listing.name}
+                          className="w-full h-full mx-auto rounded-lg object-cover"
                         />
-                        {ad.featured && (
-                          <div className="absolute top-2 left-2 bg-[#FED700] text-white text-xs px-2 py-1 rounded">
-                            Featured
-                          </div>
-                        )}
-                        <button 
-                          onClick={() => toggleFavorite(ad.id)}
+                        <button
+                          onClick={() => toggleFavorite(listing.id)}
                           className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
                         >
-                          {favorites.includes(ad.id) ? (
+                          {favorites.includes(listing.id) ? (
                             <FaHeart className="text-red-500" />
                           ) : (
                             <FaRegHeart />
                           )}
                         </button>
                       </div>
-                      
+
                       {/* Details */}
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-800">{ad.title}</h3>
-                            <div className="flex items-center text-gray-500 text-sm mt-1">
+                            <h3 className="text-lg font-semibold text-[#FED700] ">
+                              {listing.name || "No title available"}
+                            </h3>
+                            <div className="flex items-center text-gray-300 text-sm mt-1">
                               <MdOutlineLocationOn className="mr-1" />
-                              {ad.location}
+                              {listing.location.Address ||
+                                "No location available"}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xl font-bold text-gray-800">Rs {ad.price}</div>
-                            <div className="text-xs text-gray-500 mt-1">{ad.date}</div>
+                            <div className="text-lg font-semibold text-[#FED700]">
+                              Rs {listing.price || "0"}
+                            </div>
+                            <div className="text-sm text-gray-300 mt-1">
+                              {new Date(listing.publishedAt).toDateString()}
+                            </div>
                           </div>
                         </div>
-                        
+
                         <div className="mt-4 flex flex-wrap gap-2 justify-between items-center">
-                          <div className="text-sm text-gray-500">
-                            <span className="font-medium">{ad.views}</span> views
+                          <div className="text-sm text-gray-400">
+                            <span className="font-medium">50</span> views
                           </div>
-                          
-                          <div className="flex gap-2">
-                            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600">
+
+                          <div className="flex gap-3">
+                            <button
+                              className="flex items-center cursor-pointer gap-1 text-sm text-blue-400 hover:text-blue-500"
+                              onClick={() => navigate(`/details/${listing.id}`)}
+                            >
                               <FiEye className="text-base" />
-                              {ad.status === "Inactive Ads" ? "Activate" : "View"}
+                              View
                             </button>
-                            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-green-600">
+                            <button
+                              className="flex items-center cursor-pointer gap-1 text-sm text-green-400 hover:text-green-600"
+                              onClick={() => navigate(`/edit-ad/${listing.id}`)}
+                            >
                               <FiEdit className="text-base" />
                               Edit
                             </button>
-                            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
+                            <button
+                              className="flex items-center cursor-pointer  gap-1 text-sm text-red-500 hover:text-red-600"
+                              onClick={() => handleDelete(listing.documentId)}
+                            >
                               <FiTrash2 className="text-base" />
                               Delete
                             </button>
-                            {ad.status === "Active Ads" && (
-                              <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-orange-500">
-                                <FaStar className="text-base" />
-                                Promote
-                              </button>
-                            )}
                           </div>
                         </div>
-                        
+
                         {/* Status Badge */}
                         <div className="mt-3">
-                          <span className={`inline-block px-2 py-1 text-xs rounded 
-                            ${
-                              ad.status === "Active Ads" ? "bg-green-100 text-green-800" :
-                              ad.status === "Inactive Ads" ? "bg-gray-100 text-gray-800" :
-                              ad.status === "Pending Ads" ? "bg-yellow-100 text-yellow-800" :
-                              "bg-blue-100 text-blue-800"
-                            }`}
+                          <button
+                            className="inline-block px-2 py-1 text-sm rounded bg-[#FED700] hover:bg-yellow-400 cursor-pointer text-black font-medium"
+                            onClick={() =>
+                              handleAvailability(
+                                listing.availability,
+                                listing.documentId
+                              )
+                            }
                           >
-                            {ad.status}
-                          </span>
+                            {listing?.availability?.toLowerCase() === "pending"
+                              ? "Activate"
+                              : listing?.availability?.toLowerCase() ===
+                                "available"
+                              ? "Deactivate"
+                              : listing.availability}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -235,16 +304,13 @@ export default function MyAds() {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center text-gray-500 mt-10">
-              No ads found {searchQuery ? `matching "${searchQuery}"` : `under "${selectedTab}"`}
-            </div>
           )}
 
           {/* Optional: Package promo */}
           <div className="mt-10 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-md">
             <p className="text-sm text-gray-800">
-              <strong>Heavy discount on Packages:</strong> Boost your ad visibility with special packages.{" "}
+              <strong>Heavy discount on Packages:</strong> Boost your ad
+              visibility with special packages.{" "}
               <a href="#" className="text-blue-600 underline">
                 View Packages
               </a>

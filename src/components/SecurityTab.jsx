@@ -97,15 +97,26 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Switch } from "@headlessui/react";
-
+import { postData,deleteData } from "../services/apiService";
+import { useDispatch,useSelector } from "react-redux";
 const SecurityTab = () => {
+
+    const authUser = useSelector((state) => state.auth.user);
+  const loggedInUserId = authUser?.id;
   const [showPassword, setShowPassword] = useState({
     current: false,
     new: false,
     confirm: false,
   });
 
-  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [form, setForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
   const toggleVisibility = (key) => {
     setShowPassword((prev) => ({
@@ -114,22 +125,84 @@ const SecurityTab = () => {
     }));
   };
 
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+
+    if (form.newPassword !== form.confirmPassword) {
+      setMessage("New passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await postData("auth/change-password", {
+      data:
+        {
+             currentPassword: form.currentPassword,
+        password: form.newPassword,
+        passwordConfirmation:form.confirmPassword,
+        }
+      
+      }, {
+            headers: { "Content-Type": "application/json" },
+          });
+
+      if (response.success) {
+        setMessage("Password changed successfully!");
+        setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      } else {
+        setMessage(response.message || "Something went wrong.");
+      }
+    } catch (err) {
+      setMessage("Error changing password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+const handleDeleteAccount = async () => {
+  const confirm = window.confirm("Are you sure you want to delete your account?");
+  if (!confirm) return;
+
+  try {
+    setLoading(true);
+    const response = await deleteData(`users/${loggedInUserId}`,{
+            headers: { "Content-Type": "application/json" },
+          });
+
+console.log(loggedInUserId)
+    if (response.success) {
+      alert("Account deleted successfully.");
+      // Optionally log out user or redirect
+      window.location.href = "/login";
+    } else {
+      setMessage(response.message || "Failed to delete account.");
+    }
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
-    <div className="space-y-6 max-h-[530px] overflow-y-auto">
+    <div className="space-y-6 max-h-[530px] overflow-y-auto scrollbar-hide">
       {/* Change Password */}
       <div className="bg-white p-5 rounded-lg shadow-md">
-        <h4 className="text-xl font-bold text-[#FED700] mb-2">
-          Change Password
-        </h4>
-        {/* <p className="text-sm text-gray-500 mb-4">
-          Changing your password will log you out of all your active sessions
-        </p> */}
-        <form className="space-y-4">
+        <h4 className="text-xl font-bold text-[#FED700] mb-2">Change Password</h4>
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {[
-            { label: "Current Password", key: "current" },
-            { label: "New Password", key: "new" },
-            { label: "Confirm New Password", key: "confirm" },
-          ].map(({ label, key }) => (
+            { label: "Current Password", key: "current", formKey: "currentPassword" },
+            { label: "New Password", key: "new", formKey: "newPassword" },
+            { label: "Confirm New Password", key: "confirm", formKey: "confirmPassword" },
+          ].map(({ label, key, formKey }) => (
             <div key={key} className="relative">
               <label className="block text-sm font-semibold text-gray-700">
                 {label}
@@ -138,6 +211,8 @@ const SecurityTab = () => {
                 type={showPassword[key] ? "text" : "password"}
                 className="mt-1 w-full p-2 border border-gray-300 rounded-md pr-10"
                 placeholder={`Enter ${label.toLowerCase()}`}
+                value={form[formKey]}
+                onChange={(e) => handleChange(formKey, e.target.value)}
               />
               <span
                 className="absolute right-3 top-9 cursor-pointer text-gray-500"
@@ -148,56 +223,35 @@ const SecurityTab = () => {
             </div>
           ))}
 
+          {message && (
+            <p className="text-sm text-red-500 font-medium">{message}</p>
+          )}
+
           <div className="flex gap-4 justify-end mt-6">
             <button
               type="button"
+              onClick={() =>
+                setForm({ currentPassword: "", newPassword: "", confirmPassword: "" })
+              }
               className="border border-gray-300 px-4 py-2 rounded-md text-sm text-gray-800 cursor-pointer shadow transition duration-200 hover:bg-gray-100"
             >
               Discard
             </button>
             <button
+        
               type="submit"
+              disabled={loading}
               className="bg-[#FED700] font-semibold px-5 py-2 rounded-md text-sm cursor-pointer shadow transition duration-200 hover:bg-yellow-400 text-gray-800"
             >
-              Save New Password
+              {loading ? "Saving..." : "Save New Password"}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Two-Factor Authentication */}
-      <div className="bg-white p-5 rounded-lg shadow-md flex justify-between items-center">
-        <div>
-          <h4 className="text-md font-semibold text-gray-800">
-            Two – Factor Authentication
-          </h4>
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={twoFAEnabled}
-            onChange={setTwoFAEnabled}
-            className={`${
-              twoFAEnabled ? "bg-blue-600" : "bg-gray-300"
-            } relative inline-flex items-center h-[28px] w-[52px] shrink-0 cursor-pointer rounded-full transition-colors`}
-          >
-            <span
-              aria-hidden="true"
-              className={`${
-                twoFAEnabled ? "translate-x-6" : "translate-x-1"
-              } pointer-events-none inline-block h-[22px] w-[22px] transform rounded-full bg-white shadow-lg transition`}
-            />
-          </Switch>
-          <span className="text-sm text-gray-500 font-medium">
-            {twoFAEnabled ? "Enabled" : "Disabled"}
-          </span>
-        </div>
-      </div>
-
       {/* Delete Account */}
       <div className="bg-white p-5 rounded-lg shadow-md">
-        <h4 className="text-md font-bold text-red-600 mb-2">
-          Delete My Account
-        </h4>
+        <h4 className="text-md font-bold text-red-600 mb-2">Delete My Account</h4>
         <p className="text-sm text-gray-600 mb-4">
           You can delete your account and all associated jobs here
         </p>
@@ -205,9 +259,13 @@ const SecurityTab = () => {
           <button className="px-5 py-2 border border-gray-300 text-sm rounded-md cursor-pointer shadow transition duration-200 hover:bg-gray-100">
             Cancel
           </button>
-          <button className="px-5 py-2 bg-red-600 text-white text-sm rounded-md font-semibold cursor-pointer shadow transition duration-200 hover:bg-red-700">
-            Delete Account
-          </button>
+        <button
+  onClick={handleDeleteAccount}
+  disabled={loading}
+  className="px-5 py-2 bg-red-600 text-white text-sm rounded-md font-semibold cursor-pointer shadow transition duration-200 hover:bg-red-700"
+>
+  {loading ? "Deleting..." : "Delete Account"}
+</button>
         </div>
       </div>
     </div>

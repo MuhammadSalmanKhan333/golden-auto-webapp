@@ -1,16 +1,8 @@
 import React from "react";
 import Slider from "react-slick";
-
-const brands = [
-  { name: "Honda", logo: "/brands/honda.png" },
-  { name: "Jaguar", logo: "/brands/jagure.png" },
-  { name: "Nissan", logo: "/brands/nissan.png" },
-  { name: "Mercedes", logo: "/brands/mercedes.png" },
-  { name: "Audi", logo: "/brands/audi.png" },
-  { name: "BMW", logo: "/brands/bmw.png" },
-  { name: "Tesla", logo: "/brands/tesla.png" },
-];
-
+import { useState, useEffect } from "react";
+import axios from "axios";
+import utils from "../../utils/utils";
 const settings = {
   infinite: true,
   speed: 1500,
@@ -38,6 +30,32 @@ const settings = {
 };
 
 const BrandCarousel = () => {
+  const [brands, setBrands] = useState([]);
+
+  const fetchBrands = async () => {
+    try {
+      const response = await axios.get(
+        `${utils.BASE_URL}brands?pagination[limit]=200`,
+        {
+          headers: {
+            Authorization: `Bearer ${utils.token}`,
+          },
+        }
+      );
+
+      const formattedBrands = response.data.data.map((brand) => ({
+        name: brand.name,
+        icon: `${utils.BASE_URL_MEDIA}${brand.icon}`,
+      }));
+      console.log(response?.data?.data);
+      setBrands(formattedBrands);
+    } catch (error) {
+      console.error("Failed to fetch brands:", error);
+    }
+  };
+  useEffect(() => {
+    fetchBrands();
+  }, []);
   return (
     <div className="max-w-[1200px] mx-6 sm:mx-10 xl:mx-auto mt-28">
       <h2 className="text-[#FED700] text-2xl font-semibold text-left pl-3">
@@ -51,7 +69,7 @@ const BrandCarousel = () => {
               {/* Adjust horizontal spacing */}
               <div className="size-24 flex flex-col justify-center items-center bg-[#111827] rounded-2xl border border-[#293041] p-4 cursor-pointer">
                 <img
-                  src={brand.logo}
+                  src={brand.icon}
                   alt={brand.name}
                   className="size-8 object-contain mb-2"
                 />

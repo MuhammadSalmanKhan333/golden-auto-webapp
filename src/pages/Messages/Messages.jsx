@@ -1,147 +1,292 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiSend, FiPaperclip, FiSmile } from "react-icons/fi";
-import { BsFillChatFill, BsThreeDotsVertical, BsSearch } from "react-icons/bs";
-import { IoIosArrowDown } from "react-icons/io";
-import { RiChatDeleteLine } from "react-icons/ri";
+import { BsSearch } from "react-icons/bs";
+import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
+import utils from "../../utils/utils";
+import { useSelector } from "react-redux";
+import personSvg from "../../assets/icons/User.png";
 
 const Messages = () => {
+  const location = useLocation();
+  const { vehicle, seller, buyer, chatOpen } = location.state || {};
+  const { user } = useSelector((state) => state.auth);
+
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [activeConversation, setActiveConversation] = useState(1);
+  const [activeConversation, setActiveConversation] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const chatboxRef = useRef(null);
+  const [activeTab, setActiveTab] = useState("seller");
+  const [conversations, setConversations] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample conversations data
-  const [conversations, setConversations] = useState([
-    {
-      id: 1,
-      user: {
-        name: "John Doe",
-        avatar: "https://randomuser.me/api/portraits/men/1.jpg",
-        online: true,
-        title: "Web Developer",
-      },
-      lastMessage: "Hey, when can we schedule the meeting?",
-      time: "2 min ago",
-      unread: 0,
-    },
-    {
-      id: 2,
-      user: {
-        name: "Sarah Smith",
-        avatar: "https://randomuser.me/api/portraits/women/1.jpg",
-        online: false,
-        title: "Graphic Designer",
-      },
-      lastMessage: "I've sent the first draft",
-      time: "1 hour ago",
-      unread: 3,
-    },
-    {
-      id: 3,
-      user: {
-        name: "Mike Johnson",
-        avatar: "https://randomuser.me/api/portraits/men/2.jpg",
-        online: true,
-        title: "Marketing Specialist",
-      },
-      lastMessage: "The campaign is performing well",
-      time: "3 hours ago",
-      unread: 0,
-    },
-  ]);
+  // Check if chat exists between users for this vehicle
+  const checkChatExists = async () => {
+    try {
+      const response = await axios.get(
+        `${utils.BASE_URL}chats?filters[$or][0][seller][$eq]=${user.id}&filters[$and][0][buyer][$eq]=${user.id}&filters[$and][1][vehicle][$eq]=${vehicle}`,
+        {
+          headers: {
+            Authorization: `Bearer ${utils.token}`,
+          },
+        }
+      );
 
-  // Sample messages for each conversation
-  const conversationMessages = {
-    1: [
-      { text: "Hey there!", type: "bot", time: "10:30 AM" },
-      { text: "Hi! How can I help you today?", type: "user", time: "10:31 AM" },
-      {
-        text: "I'm looking for a web developer for my project",
-        type: "bot",
-        time: "10:32 AM",
-      },
-      {
-        text: "Great! I specialize in React and Node.js. What's your project about?",
-        type: "user",
-        time: "10:33 AM",
-      },
-      {
-        text: "Hey, when can we schedule the meeting?",
-        type: "bot",
-        time: "2 min ago",
-      },
-    ],
-    2: [
-      { text: "Hello Sarah!", type: "user", time: "9:00 AM" },
-      {
-        text: "Hi! I'm working on your logo design",
-        type: "bot",
-        time: "9:05 AM",
-      },
-      { text: "What style are you looking for?", type: "bot", time: "9:06 AM" },
-      {
-        text: "I want something modern and minimalist",
-        type: "user",
-        time: "9:10 AM",
-      },
-      { text: "I've sent the first draft", type: "bot", time: "1 hour ago" },
-    ],
-    3: [
-      {
-        text: "Hi Mike, how's the campaign going?",
-        type: "user",
-        time: "8:00 AM",
-      },
-      {
-        text: "It's going well! We've got good engagement",
-        type: "bot",
-        time: "8:15 AM",
-      },
-      { text: "What's the CTR looking like?", type: "user", time: "8:20 AM" },
-      {
-        text: "Around 3.5% which is above industry average",
-        type: "bot",
-        time: "8:25 AM",
-      },
-      {
-        text: "The campaign is performing well",
-        type: "bot",
-        time: "3 hours ago",
-      },
-    ],
+      if (response.data.data.length > 0) {
+        // Chat exists
+        const chat = response.data.data[0];
+        setCurrentChatId(chat.id);
+        fetchMessages(chat.id);
+        return chat.id;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error checking chat:", error);
+      return null;
+    }
   };
 
-  // Load messages when conversation changes
-  useEffect(() => {
-    if (activeConversation) {
-      setMessages(conversationMessages[activeConversation] || []);
-    }
-  }, [activeConversation]);
+  // Create new chat if doesn't exist
+  const createChat = async () => {
+    try {
+      const payload = {
+        data: {
+          vehicle: vehicle,
+          seller: seller,
+          buyer: user.id,
+          chatOpen: true,
+        },
+      };
 
-  const handleSendMessage = () => {
+      const response = await axios.post(`${utils.BASE_URL}chats`, payload, {
+        headers: {
+          Authorization: `Bearer ${utils.token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const chatId = response.data.data.id;
+      setCurrentChatId(chatId);
+      return chatId;
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      return null;
+    }
+  };
+
+  // Initialize chat - check first, create if needed
+  const initializeChat = async () => {
+    const existingChatId = await checkChatExists();
+    if (!existingChatId) {
+      // Don't create chat yet - will create when first message is sent
+      console.log(
+        "No existing chat found, will create when first message is sent"
+      );
+    }
+    setIsLoading(false);
+  };
+
+  // Fetch messages for a chat
+  const fetchMessages = async (chatId) => {
+    try {
+      const response = await axios.get(
+        `${utils.BASE_URL}messages?populate=*&filters[chat][id][$eq]=${chatId}&sort=createdAt:asc`,
+        {
+          headers: {
+            Authorization: `Bearer ${utils.token}`,
+          },
+        }
+      );
+
+      const formattedMessages = response?.data?.data?.map((msg) => ({
+        id: msg.id,
+        text: msg.content,
+        type: msg.sender?.id === user.id ? "user" : "other",
+        time: new Date(msg.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+
+      setMessages(formattedMessages);
+      scrollToBottom();
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+
+  // Fetch seller conversations
+  const fetchSellerConversations = async () => {
+    try {
+      const response = await axios.get(
+        `${utils.BASE_URL}chats?populate=buyer&filters[seller][$eq]=${user.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${utils.token}`,
+          },
+        }
+      );
+
+      console.log(response, "transformedConversations res seller");
+
+      const transformedConversations = response?.data?.data?.map((chat) => {
+        const otherUser = chat?.buyer;
+        const lastMessage =
+          chat.messages?.length > 0
+            ? chat.messages[chat.messages.length - 1]?.content || ""
+            : "";
+
+        return {
+          id: chat.id,
+          user: {
+            id: otherUser.id,
+            name: `${otherUser.fname} ${otherUser.lname}`,
+            email: otherUser.email,
+            title: "Buyer",
+            online: true,
+            avatar: otherUser.picture,
+          },
+          lastMessage,
+          time: chat.updatedAt
+            ? new Date(chat.updatedAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Just now",
+          unread: 0,
+          vehicle: chat.vehicle || null,
+        };
+      });
+
+      console.log(transformedConversations, "transformedConversations seller");
+
+      setConversations(transformedConversations);
+    } catch (error) {
+      console.error("Failed to fetch seller conversations:", error);
+    }
+  };
+
+  // Fetch buyer conversations
+  const fetchBuyerConversations = async () => {
+    try {
+      const response = await axios.get(
+        `${utils.BASE_URL}chats?populate=seller&filters[buyer][$eq]=${user.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${utils.token}`,
+          },
+        }
+      );
+      console.log(response, "transformedConversations res buyer");
+
+      const transformedConversations = response?.data?.data?.map((chat) => {
+        const otherUser = chat?.seller;
+        const lastMessage =
+          chat.messages?.length > 0
+            ? chat.messages[chat.messages.length - 1]?.content || ""
+            : "";
+
+        return {
+          id: chat.id,
+          user: {
+            id: otherUser.id,
+            name: `${otherUser.fname} ${otherUser.lname}`,
+            email: otherUser.email,
+            title: "Seller",
+            online: true,
+            avatar: otherUser.picture,
+          },
+          lastMessage,
+          time: chat.updatedAt
+            ? new Date(chat.updatedAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Just now",
+          unread: 0,
+          vehicle: chat.vehicle || null,
+        };
+      });
+
+      console.log(transformedConversations, "transformedConversations buyer");
+
+      setConversations(transformedConversations);
+    } catch (error) {
+      console.error("Failed to fetch buyer conversations:", error);
+    }
+  };
+
+  // Load conversations based on active tab
+  useEffect(() => {
+    if (activeTab === "seller") {
+      fetchSellerConversations();
+    } else {
+      fetchBuyerConversations();
+    }
+  }, [activeTab]);
+
+  // Initialize chat when component mounts
+  useEffect(() => {
+    if (vehicle && seller && buyer) {
+      initializeChat();
+    }
+  }, [vehicle, seller, buyer]);
+
+  // Send message
+  const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
 
-    const newMessage = {
-      text: inputMessage,
-      type: "user",
-      time: "Just now",
+    // If no chat exists, create one first
+    let chatId = currentChatId;
+    if (!chatId) {
+      chatId = await createChat();
+      if (!chatId) {
+        console.error("Failed to create chat");
+        return;
+      }
+    }
+
+    const payload = {
+      data: {
+        content: inputMessage,
+        sender: user.id,
+        chat: chatId,
+      },
     };
 
-    setMessages((prev) => [...prev, newMessage]);
-    setInputMessage("");
+    try {
+      const response = await axios.post(`${utils.BASE_URL}messages`, payload, {
+        headers: {
+          Authorization: `Bearer ${utils.token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    // Simulate bot response after 1 second
-    setTimeout(() => {
-      const botResponse = {
-        text: "Thanks for your message! I'll get back to you soon.",
-        type: "bot",
-        time: "Just now",
+      // Add the new message to local state
+      const newMessage = {
+        text: inputMessage,
+        type: "user",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages((prev) => [...prev, botResponse]);
-    }, 1000);
 
-    scrollToBottom();
+      setMessages((prev) => [...prev, newMessage]);
+      setInputMessage("");
+      scrollToBottom();
+
+      // Refresh conversations to update last message
+      if (activeTab === "seller") {
+        fetchSellerConversations();
+      } else {
+        fetchBuyerConversations();
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
 
   const scrollToBottom = () => {
@@ -169,8 +314,17 @@ const Messages = () => {
   const filteredConversations = conversations.filter(
     (conv) =>
       conv.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      (conv.lastMessage &&
+        conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  if (isLoading) {
+    return (
+      <div className="p-3 md:p-6 bg-gray-900 h-screen flex items-center justify-center">
+        <div className="text-white">Loading chat...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-3 md:p-6 bg-gray-900">
@@ -178,6 +332,36 @@ const Messages = () => {
         {/* Header */}
         <div className="bg-gray-900 text-yellow-400 p-4 flex justify-between items-center">
           <h2 className="text-lg font-semibold">Messages</h2>
+        </div>
+
+        {/* Tabs */}
+        <div className="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+          <ul className="flex flex-wrap -mb-px">
+            <li className="me-2">
+              <button
+                onClick={() => setActiveTab("seller")}
+                className={`inline-block p-4 border-b-2 min-w-[100px] rounded-t-lg transition-all duration-300 ease-in-out ${
+                  activeTab === "seller"
+                    ? "text-yellow-400 border-yellow-400"
+                    : "border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                }`}
+              >
+                Seller
+              </button>
+            </li>
+            <li className="me-2">
+              <button
+                onClick={() => setActiveTab("buyer")}
+                className={`inline-block p-4 min-w-[100px] border-b-2 rounded-t-lg transition-all duration-300 ease-in-out ${
+                  activeTab === "buyer"
+                    ? "text-yellow-400 border-yellow-400"
+                    : "border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                }`}
+              >
+                Buyer
+              </button>
+            </li>
+          </ul>
         </div>
 
         {/* Main Content */}
@@ -206,6 +390,7 @@ const Messages = () => {
                   onClick={() => {
                     setActiveConversation(conversation.id);
                     markAsRead(conversation.id);
+                    fetchMessages(conversation.id);
                   }}
                   className={`p-3 border-b border-gray-700 cursor-pointer hover:bg-gray-700 flex items-center ${
                     activeConversation === conversation.id ? "bg-gray-700" : ""
@@ -213,7 +398,7 @@ const Messages = () => {
                 >
                   <div className="relative mr-3">
                     <img
-                      src={conversation.user.avatar}
+                      src={conversation.user.avatar || personSvg}
                       alt={conversation.user.name}
                       className="w-10 h-10 rounded-full object-cover"
                     />
@@ -231,10 +416,7 @@ const Messages = () => {
                       </span>
                     </div>
                     <p className="text-xs text-gray-300 truncate">
-                      {conversation.lastMessage}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {conversation.user.title}
+                      {conversation.lastMessage || "No messages yet"}
                     </p>
                   </div>
                   {conversation.unread > 0 && (
@@ -251,13 +433,13 @@ const Messages = () => {
           <div className="w-2/3 flex flex-col bg-gray-800">
             {/* Chat Header */}
             <div className="p-3 flex justify-between items-center border-b border-gray-700">
-              {activeConversation && (
+              {activeConversation ? (
                 <div className="flex items-center">
                   <div className="relative mr-3">
                     <img
                       src={
                         conversations.find((c) => c.id === activeConversation)
-                          ?.user.avatar
+                          ?.user.avatar || personSvg
                       }
                       alt="User"
                       className="w-10 h-10 rounded-full object-cover"
@@ -274,23 +456,22 @@ const Messages = () => {
                           ?.user.name
                       }
                     </h3>
-                    <p className="text-xs text-gray-400">
-                      {
-                        conversations.find((c) => c.id === activeConversation)
-                          ?.user.title
-                      }
-                    </p>
                   </div>
                 </div>
+              ) : (
+                <div className="text-white">Select a conversation</div>
               )}
-              <div className="flex space-x-2">
-                <button className="text-gray-400 hover:text-yellow-400">
-                  <BsThreeDotsVertical />
-                </button>
-                <button className="text-gray-400 hover:text-yellow-400">
-                  <RiChatDeleteLine />
-                </button>
-              </div>
+
+              {activeConversation && (
+                <div className="flex space-x-2">
+                  <Link
+                    to={`/details/${vehicle || ""}`}
+                    className="text-white text-xs bg-yellow-500 px-2 py-1 rounded-md"
+                  >
+                    View Ad
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Messages */}
@@ -298,45 +479,57 @@ const Messages = () => {
               ref={chatboxRef}
               className="flex-1 p-4 overflow-y-auto h-screen max-h-[90vh] bg-gray-900"
             >
-              <div className="space-y-3">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      message.type === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.type === "user"
-                          ? "bg-yellow-500 text-gray-900 rounded-br-none"
-                          : "bg-gray-700 text-white rounded-bl-none"
-                      }`}
-                    >
-                      <p>{message.text}</p>
-                      <p
-                        className={`text-xs mt-1 ${
+              {activeConversation ? (
+                messages.length > 0 ? (
+                  <div className="space-y-3">
+                    {messages.map((message, index) => (
+                      <div
+                        key={index}
+                        className={`flex ${
                           message.type === "user"
-                            ? "text-gray-800"
-                            : "text-gray-300"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
-                        {message.time}
-                      </p>
-                    </div>
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            message.type === "user"
+                              ? "bg-yellow-500 text-gray-900 rounded-br-none"
+                              : "bg-gray-700 text-white rounded-bl-none"
+                          }`}
+                        >
+                          <p>{message.text}</p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              message.type === "user"
+                                ? "text-gray-800"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {message.time}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400">
+                    No messages yet
+                  </div>
+                )
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400">
+                  Select a conversation to view messages
+                </div>
+              )}
             </div>
 
             {/* Message Input */}
+
             <div className="p-3 border-t border-gray-700 bg-gray-800">
               <div className="flex items-center">
                 <button className="text-gray-400 hover:text-yellow-400 mx-2">
                   <FiPaperclip />
-                </button>
-                <button className="text-gray-400 hover:text-yellow-400 mx-2">
-                  <FiSmile />
                 </button>
                 <input
                   type="text"

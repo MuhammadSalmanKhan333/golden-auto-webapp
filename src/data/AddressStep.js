@@ -1,0 +1,62 @@
+export const stateCityMap = {
+  California: [
+    "Los Angeles",
+    "San Francisco",
+    "San Diego",
+    "San Jose",
+    "Sacramento",
+  ],
+  Texas: ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth"],
+  Florida: ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee"],
+  NewYork: ["New York City", "Buffalo", "Rochester", "Albany", "Syracuse"],
+  Illinois: ["Chicago", "Aurora", "Naperville", "Joliet", "Springfield"],
+  Pennsylvania: [
+    "Philadelphia",
+    "Pittsburgh",
+    "Allentown",
+    "Erie",
+    "Harrisburg",
+  ],
+  Georgia: ["Atlanta", "Savannah", "Augusta", "Macon", "Athens"],
+  Ohio: ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"],
+  Arizona: ["Phoenix", "Tucson", "Mesa", "Chandler", "Scottsdale"],
+  NorthCarolina: [
+    "Charlotte",
+    "Raleigh",
+    "Greensboro",
+    "Durham",
+    "Winston-Salem",
+  ],
+
+  // ✅ 6 more states added below:
+  Michigan: [
+    "Detroit",
+    "Grand Rapids",
+    "Warren",
+    "Sterling Heights",
+    "Ann Arbor",
+  ],
+  Washington: ["Seattle", "Spokane", "Tacoma", "Vancouver", "Bellevue"],
+  Massachusetts: ["Boston", "Worcester", "Springfield", "Lowell", "Cambridge"],
+  Virginia: [
+    "Virginia Beach",
+    "Norfolk",
+    "Chesapeake",
+    "Richmond",
+    "Arlington",
+  ],
+  Colorado: [
+    "Denver",
+    "Colorado Springs",
+    "Aurora",
+    "Fort Collins",
+    "Lakewood",
+  ],
+  Tennessee: [
+    "Nashville",
+    "Memphis",
+    "Knoxville",
+    "Chattanooga",
+    "Clarksville",
+  ],
+};

@@ -1,108 +1,186 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import { MdArrowDropDown, MdArrowForward, MdArrowBack } from "react-icons/md";
+import {fetchData} from "../../services/apiService"
+import utils from "../../utils/utils"
 
 const LatestCar = () => {
-  // Sample car data
-  const cars = [
-    {
-      id: 1,
-      image:
-        "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80",
-      brand: "BMW",
-      model: "X7 M50i",
-    },
-    {
-      id: 2,
-      image:
-        "https://images.unsplash.com/photo-1555215695-3004980ad54e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80",
-      brand: "Audi",
-      model: "RS7 Sportback",
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1605540436563-5bca919ae766?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80",
-      brand: "Honda",
-      model: "Civic Type R",
-    },
-    {
-      id: 4,
-      image:
-        "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80",
-      brand: "Mercedes",
-      model: "AMG GT",
-    },
-    {
-      id: 5,
-      image:
-        "https://images.unsplash.com/photo-1494972308805-463bc619d34e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80",
-      brand: "Tesla",
-      model: "Model S Plaid",
-    },
-  ];
+  const [categories, setCategories] = useState([]); // [{id, name}]
+  const [carData, setCarData] = useState({}); // { [name]: [...] }
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [visibleCategories, setVisibleCategories] = useState([]);
+
+  const filters = ["All", ...categories.map((cat) => cat.name)];
+
+  // Fetch categories and their cars
+  useEffect(() => {
+    const fetchCategoriesAndCars = async () => {
+      try {
+        // Step 1: Fetch Categories
+        const categoryRes = await fetchData(`/categories`);
+        const categoryList = categoryRes.data; // Adjust based on actual API
+
+        setCategories(categoryList);
+        setVisibleCategories([categoryList[0]?.name]);
+        setSelectedFilter(categoryList[0]?.name);
+
+       
+        const carDataObj = {};
+        for (const category of categoryList) {
+          const carsRes =  await fetchData(
+            `vehicles?populate=brand.brand&populate=brand.model&filters[category][category]=${category.id}&pagination[limit]=8&sort=updatedAt:desc`
+          );
+          carDataObj[category.name] = carsRes.data;
+          console.log(carsRes.data)
+        }
+        
+        setCarData(carDataObj);
+      } catch (error) {
+        console.error("Error fetching data", error);
+      }
+    };
+
+    fetchCategoriesAndCars();
+  }, []);
+
+  const handleFilterChange = (filter) => {
+    setSelectedFilter(filter);
+    setFilterOpen(false);
+    setVisibleCategories(
+      filter === "All" ? categories.map((c) => c.name) : [filter]
+    );
+  };
+
+  const handleLoadMore = () => {
+    const remaining = categories
+      .map((c) => c.name)
+      .filter((name) => !visibleCategories.includes(name));
+    if (remaining.length > 0) {
+      setVisibleCategories([...visibleCategories, remaining[0]]);
+    }
+  };
+
+  // Arrow components
+  const NextArrow = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/30 hover:bg-white/50 rounded-full p-2 backdrop-blur-sm transition-all"
+    >
+      <MdArrowForward className="text-white text-xl" />
+    </button>
+  );
+
+  const PrevArrow = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/30 hover:bg-white/50 rounded-full p-2 backdrop-blur-sm transition-all"
+    >
+      <MdArrowBack className="text-white text-xl" />
+    </button>
+  );
+
+  const sliderSettings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    autoplay: true,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    responsive: [
+      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 640, settings: { slidesToShow: 1 } },
+    ],
+  };
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h2 className="text-3xl font-bold text-[#FED700] mb-8">Latest Cars</h2>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left featured card - now spans 3 columns instead of 2 */}
-        {/* Left featured card - now spans 3 columns instead of 2 */}
-        <div className="lg:col-span-3 group relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full">
-          <div className="w-full h-full overflow-hidden">
-            <img
-              src={cars[0].image}
-              alt={`${cars[0].brand} ${cars[0].model}`}
-              className="w-full h-full object-cover aspect-[4/3] transition-transform duration-500 group-hover:scale-105"
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-[#FED700]">Latest Cars</h2>
+        <div className="relative">
+          <button
+            onClick={() => setFilterOpen(!filterOpen)}
+            className="flex items-center gap-1 border border-[#FED700] text-[#FED700] px-4 py-2 rounded-lg hover:bg-[#FED700]/10"
+          >
+            <span>Filter</span>
+            <MdArrowDropDown
+              size={20}
+              className={`transition-transform ${filterOpen ? "rotate-180" : ""}`}
             />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-            <div className="text-white">
-              <h3 className="text-2xl font-bold">{cars[0].brand}</h3>
-              <p className="text-lg">{cars[0].model}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - spans 2 columns */}
-        <div className="lg:col-span-2 flex flex-col gap-4 h-full">
-          {/* Top two cards */}
-          <div className="grid grid-cols-2 gap-4 h-[50%]">
-            {cars.slice(1, 3).map((car) => (
-              <div
-                key={car.id}
-                className="group relative rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full"
-              >
-                <img
-                  src={car.image}
-                  alt={`${car.brand} ${car.model}`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <div className="text-white">
-                    <h3 className="font-semibold">{car.brand}</h3>
-                    <p className="text-sm">{car.model}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom full-width card */}
-          <div className="group relative rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-[50%]">
-            <img
-              src={cars[3].image}
-              alt={`${cars[3].brand} ${cars[3].model}`}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-              <div className="text-white">
-                <h3 className="text-xl font-semibold">{cars[3].brand}</h3>
-                <p className="text-md">{cars[3].model}</p>
-              </div>
-            </div>
-          </div>
+          </button>
+          {filterOpen && (
+            <ul className="absolute mt-2 right-0 w-40 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
+              {filters.map((f) => (
+                <li
+                  key={f}
+                  className={`px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors ${
+                    (f === "All" &&
+                      visibleCategories.length === categories.length) ||
+                    visibleCategories.includes(f)
+                      ? "bg-gray-100 font-medium"
+                      : ""
+                  }`}
+                  onClick={() => handleFilterChange(f)}
+                >
+                  {f}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
+
+      {/* Carousels */}
+      <div className="relative">
+        {visibleCategories.map(
+          (category) =>
+            carData[category]?.length > 0 && (
+              <div key={category} className="mb-10 relative">
+                <h3 className="text-xl text-white font-semibold mb-4">
+                  {category}
+                </h3>
+             <Slider {...sliderSettings}>
+  {carData[category].map((car) => (
+    <div key={car.id} className="px-2">
+      <div className="relative aspect-square w-92 h-92 overflow-hidden rounded-lg shadow-lg group">
+        <img
+          src={utils.BASE_URL_MEDIA +car.picture?.picture?.[0] || "/placeholder.jpg"}
+          alt={car.brand?.model?.name || "Car"}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-in-out"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+        <div className="absolute bottom-0 left-0 p-4 bg-white/20 backdrop-blur-md text-white w-full">
+          <h4 className="font-semibold text-lg">{car.brand?.brand?.name}</h4>
+          <p className="text-sm">{car.brand?.model?.name}</p>
+        </div>
+      </div>
+    </div>
+  ))}
+</Slider>
+
+              </div>
+            )
+        )}
+      </div>
+
+      {/* Load More */}
+      {visibleCategories.length < categories.length && (
+        <div className="text-center mt-6">
+          <button
+            onClick={handleLoadMore}
+            className="inline-flex items-center bg-[#FED700] hover:bg-[#FED700]/90 text-gray-900 px-6 py-2 rounded-lg font-medium transition-colors shadow hover:shadow-md"
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </section>
   );
 };
